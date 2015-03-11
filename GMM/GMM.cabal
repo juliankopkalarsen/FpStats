@@ -1,0 +1,29 @@
+name: GMM
+version: 0.0.1
+cabal-version: >=1.2
+build-type: Simple
+license: AllRightsReserved
+description:  
+data-dir: ""
+ 
+executable GMM
+    build-depends: QuickCheck -any, array -any, base -any,
+                   containers -any, easyplot -any, hmatrix -any, hstatistics -any,
+                   parsec -any, random -any
+    main-is: Main.hs
+    buildable: True
+    extensions: BangPatterns
+    hs-source-dirs: src
+    other-modules: GMM
+ 
+test-suite test-GMM
+    build-depends: QuickCheck -any, array -any, base -any,
+                   containers -any, easyplot -any, hmatrix -any, hstatistics -any,
+                   parsec -any, random -any
+    type: exitcode-stdio-1.0
+    main-is: Main.hs
+    buildable: True
+    cpp-options: -DMAIN_FUNCTION=testMain
+    extensions: BangPatterns
+    hs-source-dirs: src
+    other-modules: FileParsing
