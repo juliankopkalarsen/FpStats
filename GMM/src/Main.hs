@@ -43,6 +43,7 @@ plotClusters assign x = map toplot $ range (1,maximum $ elems assign)
                       where toplot i = Data2D [Title "d"] [] (toTouples $ map toList $ select i)
                             select i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x $ elems assign
 
+
 time :: IO t -> IO t
 time a = do
     start <- getCPUTime
@@ -53,7 +54,7 @@ time a = do
     return v
 
 -- Main
-exeMain = do
+main = do
     --contents <- readFile "../../Data/AccidentData.csv"
     --contents <- readFile "../../Data/2Clusters.csv"
     --contents <- readFile "../../Data/synthetic.6clust.csv"
@@ -62,26 +63,16 @@ exeMain = do
     let num_Components = 2
         num_Samples = 20000
         stdData = p2NormList contents
-        result = getElement stdData 1 num_Components num_Samples
+        result = getElement stdData 1 num_Components
+        p a = plot X11 $ plotClusters a stdData
 
-    print $ scatterMatrix stdData
     --Plot Data
-
     putStrLn "Starting..."
-    time $ plot X11 $ plotClusters result stdData
+    time $ p (result num_Samples)
     putStrLn "Done."
 
--- Entry point for unit tests.
-testMain = do
-    allPass <- $quickCheckAll -- Run QuickCheck on all prop_ functions
-    unless allPass exitFailure
+    --fib n = (xs!!(n-1)) + (xs!!(n-2))
+    --        where xs = 0:1:map fib [2..]
 
--- This is a clunky, but portable, way to use the same Main module file
--- for both an application and for unit tests.
--- MAIN_FUNCTION is preprocessor macro set to exeMain or testMain.
--- That way we can use the same file for both an application and for tests.
-#ifndef MAIN_FUNCTION
-#define MAIN_FUNCTION exeMain
-#endif
-main = MAIN_FUNCTION
+
 

@@ -3,10 +3,10 @@ version: 0.0.1
 cabal-version: >=1.2
 build-type: Simple
 license: AllRightsReserved
-description:  
+license-file: ""
 data-dir: ""
  
-executable IOandPlottest
+executable GMM
     build-depends: QuickCheck -any, array -any, base -any,
                    containers -any, easyplot -any, hmatrix -any, hstatistics -any,
                    parsec -any, random -any
@@ -14,9 +14,9 @@ executable IOandPlottest
     buildable: True
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: GMM
+    other-modules: SummaryStatistic GMM
  
-test-suite test-IOandPlottest
+test-suite test-GMM
     build-depends: QuickCheck -any, array -any, base -any,
                    containers -any, easyplot -any, hmatrix -any, hstatistics -any,
                    parsec -any, random -any
