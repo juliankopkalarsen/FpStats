@@ -55,24 +55,23 @@ genMoves seed n k = zipWith (\i c -> Move {node=i, comp=c})
                             (randomRs (1,n) (mkStdGen seed))
                             (randomRs (1,k) (mkStdGen seed))
 
-sample :: (Partition -> Move -> Double) -> Partition -> Move -> Double -> Partition
-sample f a m accept_prop
-    | accept_prop < f a m = b -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Accepted: " ++ show (f a m)) b
-    | otherwise           = a -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Rejected: " ++ show (f a m)) a
-                            where b = apply_move a m
-
-getChain :: (Partition -> Move -> Double) -> Partition -> [Move] -> [Double] -> Chain
-getChain f start m r = scanl g start l
-                       where   g s (m',r') = sample f s m' r'
-                               l = zip m r
+sample :: (Partition -> Move -> Double) -> Partition -> Proposal -> Partition
+sample f prev_state (m, accept_prop)
+    | accept_prop < f prev_state m = new_state -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Accepted: " ++ show (f a m)) b
+    | otherwise                    = prev_state -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Rejected: " ++ show (f a m)) a
+                            where new_state = apply_move prev_state m
 
 getElement :: X -> Int -> Int -> Int -> Partition
-getElement x seed k i = foldl' sampler start $ take i $ props seed n k
+getElement x seed k nSamples = foldl' sampler start $ take nSamples (props seed n k)
                       where n = length x
-                            f = lgaussAccept lnormalInvWishart x
                             start = naivefromXNk n k
-                            sampler s' (m', r') = sample f s' m' r'
+                            sampler = sample (acceptanceRatio p)
+                            p = pOfAll lnormalInvWishart x
 
+
+type Proposal = (Move, Double)
+
+props :: Int -> Int -> Int -> [Proposal]
 props seed n k = zip moves rand_accepts
                 where rand_accepts = randomRs (0.0,1.0) (mkStdGen seed) :: [Double]
                       moves = genMoves seed n k
@@ -80,14 +79,18 @@ props seed n k = zip moves rand_accepts
 select :: X -> Partition -> Int -> X
 select x a i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x $ elems a
 
-lgaussAccept :: Likelihood -> X -> Partition -> Move -> Double
-lgaussAccept f x a m = exp ((l x $ apply_move a m)-(l x a))
-                     where  l x' a' = sumAllClusters f x' a'
 
-sumAllClusters :: (X -> Double) -> X -> Partition -> Double
-sumAllClusters f x a = sum $ map (\i -> f (xs i))  [1..k]
-                       where   k = maximum $ elems a
-                               xs i = select x a i
+acceptanceRatio :: (Partition -> Double) -> Partition -> Move -> Double
+acceptanceRatio q x m = logDiffRatio (q x') (q x)
+                            where x' = apply_move x m
+
+logDiffRatio :: Double -> Double -> Double
+logDiffRatio a b = exp (a - b)
+
+pOfAll :: Likelihood -> X -> Partition -> Double
+pOfAll f x a = sum $ map (\i -> f (xs i))  [1..k]
+               where   k = maximum $ elems a
+                       xs i = select x a i
 
 qtrace x = trace ("value: " ++ show x) x
 
