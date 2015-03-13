@@ -39,9 +39,9 @@ toTouples = map list2Touple
 
 --to2D = toTouples . toLists
 
-plotClusters assign x = map toplot $ range (1,maximum $ elems assign)
+plotClusters assign x = map toplot $ range (1,maximum assign)
                       where toplot i = Data2D [Title "d"] [] (toTouples $ map toList $ select i)
-                            select i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x $ elems assign
+                            select i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x assign
 
 
 time :: IO t -> IO t
