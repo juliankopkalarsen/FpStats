@@ -1,3 +1,4 @@
 *.o
 *.hi
 setup-config
+*.dat
