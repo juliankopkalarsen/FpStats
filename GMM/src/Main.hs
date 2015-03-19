@@ -61,7 +61,7 @@ main = do
     contents <- readFile "../../Data/synth2c2d.csv"
 
     let num_Components = 2
-        num_Samples = 20000
+        num_Samples = 8000
         stdData = p2NormList contents
         result = getElement stdData 1 num_Components
         p a = plot X11 $ plotClusters a stdData

@@ -3,9 +3,8 @@ version: 0.0.1
 cabal-version: >=1.2
 build-type: Simple
 license: AllRightsReserved
-description:  
 data-dir: ""
- 
+
 executable GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -14,8 +13,8 @@ executable GMM
     buildable: True
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: GMM Distributions SummaryStatistic
- 
+    other-modules: Distributions GMM Math
+
 test-suite test-GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -26,4 +25,4 @@ test-suite test-GMM
     cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: FileParsing
+    other-modules: Distributions FileParsing Math
