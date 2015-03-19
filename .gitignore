@@ -1,5 +1,3 @@
-GMM/dist
-*.o
-*.hi
-setup-config
+dist/
 *.dat
+*~
