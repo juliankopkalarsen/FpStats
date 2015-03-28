@@ -40,7 +40,7 @@ parseToStrings input = case parse csvFile "(unknown)" input of
                         Right c -> c
 
 parseToDouble :: String -> [[Double]]
-parseToDouble input = map (\l -> map read l) . tail $ parseToStrings input
+parseToDouble input = map (map read) . tail $ parseToStrings input
 
 parseToMatrix :: String -> Matrix Double
 parseToMatrix = fromLists . parseToDouble

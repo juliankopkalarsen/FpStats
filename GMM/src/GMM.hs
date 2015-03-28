@@ -13,7 +13,11 @@
 -----------------------------------------------------------------------------
 
 module GMM (
-    getElement
+    X,
+    Partition,
+    getElement,
+    select,
+    numComponents
 ) where
 
 import Distributions (lnormalInvWishart)
@@ -33,33 +37,45 @@ type X = [Vector Double]
 
 type Chain = [Partition]
 
-type Partition = [Int]
+type Partition = [[Int]]
 
 type Likelihood = (X -> Double)
 
 naivefromXNk :: Int -> Int -> Partition
-naivefromXNk n k = take n $ cycle [1..k]
+naivefromXNk n k = transpose $ splitEvery k [0..n-1]
+
+splitEvery _ [] = []
+splitEvery n list = first : (splitEvery n rest)
+                    where (first,rest) = splitAt n list
 
 blockFromNk :: Int -> Int -> Partition
-blockFromNk n k = (replicate n1 1)++(replicate (n-n1) 2)
-                    where n1 = 100
+blockFromNk n k = fst s : snd s : []
+                  where n1 = n `div` k
+                        s = splitAt n1 [0..n-1]
 
 data Move = Move {   node :: Int
                     ,comp :: Int
                     } deriving Show
 
 apply_move :: Partition -> Move -> Partition
-apply_move p m = a ++ (c:b)
-                    where   (a,b) = case splitAt i p of
-                                    (xp,_:xs) -> (xp,xs)
-                                    (xp,[]) -> (xp,[])
-                            i = node m
-                            c = comp m
+apply_move p m = moveNode c i p
+                 where  i = node m
+                        c = comp m
+
+moveNode:: Int -> Int -> [[Int]] -> [[Int]]
+moveNode 0 i (x:xs)
+    | elem i x = x:xs
+    | notElem i x = (i:x):(map (delete i) xs)
+moveNode n i (x:xs) = (delete i x):(moveNode (n-1) i xs)
+
+
+applyTo :: (a -> a) -> Int -> [a] -> [a]
+applyTo f i l = (take (i-1) l) ++ (f (l!!i)):(drop i l)
 
 genMoves :: Int -> Int -> Int -> [Move]
 genMoves seed n k = zipWith (\i c -> Move {node=i, comp=c})
-                            (randomRs (1,n) (mkStdGen seed))
-                            (randomRs (1,k) (mkStdGen seed))
+                            (randomRs (0,n-1) (mkStdGen seed))
+                            (randomRs (0,k-1) (mkStdGen seed))
 
 sample :: (Partition -> Move -> Double) -> Partition -> Proposal -> Partition
 sample f prev_state (m, accept_prop)
@@ -83,11 +99,14 @@ props seed n k = zip moves rand_accepts
                       moves = genMoves seed n k
 
 select :: X -> Partition -> Int -> X
-select x p i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x p
+select x p i = map (x!!) (p!!i)
+
+numComponents :: Partition -> Int
+numComponents = length
 
 split_data :: X -> Partition -> [X]
-split_data x p = map (select x p) [1..k]
-                 where   k = maximum p
+split_data x p = map (select x p) [0..(k-1)]
+                 where   k = numComponents p
 
 acceptanceRatio :: (Partition -> Double) -> Partition -> Move -> Double
 acceptanceRatio q x m = logDiffRatio (q x') (q x)

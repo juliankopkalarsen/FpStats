@@ -24,9 +24,9 @@ import Numeric.LinearAlgebra.Util  (zeros)
 type X = [Vector Double]
 
 lnormalInvWishart :: X -> Double
-lnormalInvWishart x = - (n * d * 2 * (log pi))
-                      + (mlgamma d (vn/2))
-                      - (mlgamma d (v0/2))
+lnormalInvWishart x = - n * d * 2 * log pi
+                      + mlgamma d (vn/2)
+                      - mlgamma d (v0/2)
                       + (v0/2) * ldalpha0
                       - (vn/2) * ldalphaN
                       + (d/2) * ((log k0)-(log kn))
@@ -44,7 +44,7 @@ lnormalInvWishart x = - (n * d * 2 * (log pi))
                             kn = k0 + n
                             s = scatterMatrix x
                             mu0 = fromRows [head $ toRows $ zeros 1 (round d)] -- hyperparameter
-                            xm = fromRows $ [ fst $ meanCov $ fromRows x ]
+                            xm = fromRows [ fst $ meanCov $ fromRows x ]
 
 
 
@@ -56,6 +56,6 @@ lnormalPrior x = -(n/2)*lDetSigma -(1/2)* tr (invSigma <> s)
                       s = scatterMatrix x
                       (invSigma,(absLSigma,signLSigma)) = invlndet sigma
                       lDetSigma = absLSigma * signLSigma
-                      sigma = ident $ d -- Hyperparameter for the covariance of the cluster
+                      sigma = ident d -- Hyperparameter for the covariance of the cluster
 
 

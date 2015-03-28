@@ -38,10 +38,10 @@ toTouples :: Num a => [[a]] -> [(a,a)]
 toTouples = map list2Touple
 
 --to2D = toTouples . toLists
-
-plotClusters assign x = map toplot $ range (1,maximum assign)
-                      where toplot i = Data2D [Title "d"] [] (toTouples $ map toList $ select i)
-                            select i =  fst . unzip $ filter (\(_,c)->c==i) $ zip x assign
+plotClusters :: X -> Partition -> [Graph2D Double Double]
+plotClusters x p = map toplot $ range (0,(k-1))
+                      where toplot i = Data2D [Title "d"] [] (toTouples $ map toList $ select x p i)
+                            k = numComponents p
 
 
 time :: IO t -> IO t
@@ -64,7 +64,7 @@ main = do
         num_Samples = 8000
         stdData = p2NormList contents
         result = getElement stdData 1 num_Components
-        p a = plot X11 $ plotClusters a stdData
+        p a = plot X11 $ plotClusters stdData a
 
     --Plot Data
     putStrLn "Starting..."
