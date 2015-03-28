@@ -87,8 +87,9 @@ getElement :: X -> Int -> Int -> Int -> Partition
 getElement x seed k nSamples = foldl' sampler start $ take nSamples (props seed n k)
                       where n = length x
                             start = naivefromXNk n k
-                            sampler = sample $ acceptanceRatio $ memo q
-                            q param = sum . map lnormalInvWishart $ split_data x param
+                            sampler = sample $ acceptanceRatio q
+                            q = sum . map (lik)
+                            lik = lnormalInvWishart . map (x!!)
 
 
 type Proposal = (Move, Double)
@@ -103,10 +104,6 @@ select x p i = map (x!!) (p!!i)
 
 numComponents :: Partition -> Int
 numComponents = length
-
-split_data :: X -> Partition -> [X]
-split_data x p = map (select x p) [0..(k-1)]
-                 where   k = numComponents p
 
 acceptanceRatio :: (Partition -> Double) -> Partition -> Move -> Double
 acceptanceRatio q x m = logDiffRatio (q x') (q x)
