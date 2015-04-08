@@ -27,9 +27,11 @@ import Test.QuickCheck.All (quickCheckAll)
 import Graphics.EasyPlot
 import GHC.Arr
 import FileParsing
-import GMM
 import Numeric.Statistics.PCA
 import Numeric.LinearAlgebra
+
+import GMM
+import Partition
 
 list2Touple (a:b:_) = (a,b)
 list2Touple _ = (0,0)
@@ -60,8 +62,8 @@ main = do
     --contents <- readFile "../../Data/synthetic.6clust.csv"
     contents <- readFile "../../Data/synth2c2d.csv"
 
-    let num_Components = 2
-        num_Samples = 8000
+    let num_Components = 3
+        num_Samples = 4000
         stdData = p2NormList contents
         result = getElement stdData 1 num_Components
         p a = plot X11 $ plotClusters stdData a
@@ -70,9 +72,5 @@ main = do
     putStrLn "Starting..."
     time $ p (result num_Samples)
     putStrLn "Done."
-
-    --fib n = (xs!!(n-1)) + (xs!!(n-2))
-    --        where xs = 0:1:map fib [2..]
-
 
 

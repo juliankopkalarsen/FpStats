@@ -11,9 +11,10 @@ executable GMM
                    hstatistics -any, parsec -any, random -any
     main-is: Main.hs
     buildable: True
-    extensions: BangPatterns
+    extensions: MultiParamTypeClasses RankNTypes FlexibleInstances
+                BangPatterns TypeSynonymInstances GADTs GADTSyntax
     hs-source-dirs: src
-    other-modules: Distributions GMM Math
+    other-modules: Cube Math Partition GMM Distributions
 
 test-suite test-GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
@@ -25,4 +26,4 @@ test-suite test-GMM
     cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: Distributions FileParsing Math
+    other-modules: Cube Math Partition Distributions FileParsing

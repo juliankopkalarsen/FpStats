@@ -14,16 +14,50 @@
 
 module Distributions (
     lnormalInvWishart,
+    lMixNormWish,
+    delta,
+    Expr,
+    dlNormW,
     lnormalPrior
 ) where
 
-import Math (mlgamma, scatterMatrix)
-import Numeric.LinearAlgebra (Vector, toList, (<>), invlndet, ident, dim, fromRows, scale, trans, toRows, meanCov, takeDiag)
+import Math (mlgamma,
+             scatterMatrix)
+
+import Numeric.LinearAlgebra (Vector,
+                              toList,
+                              (<>),
+                              invlndet,
+                              ident,
+                              dim,
+                              fromRows,
+                              scale,
+                              trans,
+                              toRows,
+                              meanCov,
+                              takeDiag)
+
 import Numeric.LinearAlgebra.Util  (zeros)
+
+import Partition (Partition, Component, groups)
 
 type X = [Vector Double]
 
-lnormalInvWishart :: X -> Double
+data Expr i o = Fun (i -> o)
+
+type DeltaLik = Partition -> Partition -> Double
+
+delta :: Expr Partition Double -> DeltaLik
+delta (Fun f) = \x' -> \x -> (f x') - (f x)
+
+dlNormW :: X -> DeltaLik
+dlNormW x = delta (Fun (lMixNormWish x))
+
+
+lMixNormWish :: X -> Partition -> Double
+lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
+
+--lnormalInvWishart :: X -> Double
 lnormalInvWishart x = - n * d * 2 * log pi
                       + mlgamma d (vn/2)
                       - mlgamma d (v0/2)
@@ -34,8 +68,8 @@ lnormalInvWishart x = - n * d * 2 * log pi
                             d = fromIntegral $ dim $ head x
                             v0 = 100 -- hyperparameter must be (v0 > d)
                             vn = v0 + n
-                            alpha0 = (ident $ round d) -- hyperparameter for the shape of the covariance matrix
-                            alphaN = alpha0 + s + (scale ((k0*n)/(k0+kn)) ((xm-mu0)<>(trans (xm-mu0))))
+                            alpha0 = ident $ round d -- hyperparameter for the shape of the covariance matrix
+                            alphaN = alpha0 + s + scale ((k0*n)/(k0+kn)) (xm-mu0)<> trans (xm-mu0)
                             ldalpha0 = absLnDet * signDet
                                      where (_,(absLnDet,signDet)) = invlndet alpha0
                             ldalphaN = absLnDet * signDet

@@ -23,10 +23,10 @@ import Numeric.LinearAlgebra.Util  (zeros)
 type X = [Vector Double]
 
 scatterMatrix :: X -> Matrix Double
-scatterMatrix x = foldl (+) (zeros d d) $ map (\ p -> (p-xm)<>(trans (p-xm)) ) matrixX
+scatterMatrix x = foldl (+) (zeros d d) $ map (\ p -> (p-xm)<>trans (p-xm) ) matrixX
                     where n = fromIntegral $ length x :: Double
                           d = fromIntegral $ dim $ head x
-                          xm = fromRows $ [ fst $ meanCov $ fromRows x ]
+                          xm = fromRows [ fst $ meanCov $ fromRows x ]
                           matrixX = map (\p -> fromRows [p]) x
 
 cofG :: [Double]
