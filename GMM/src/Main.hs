@@ -62,7 +62,7 @@ main = do
     --contents <- readFile "../../Data/synthetic.6clust.csv"
     contents <- readFile "../../Data/synth2c2d.csv"
 
-    let num_Components = 3
+    let num_Components = 2
         num_Samples = 4000
         stdData = p2NormList contents
         result = getElement stdData 1 num_Components

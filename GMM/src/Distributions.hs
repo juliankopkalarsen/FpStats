@@ -12,6 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
+
 module Distributions (
     lnormalInvWishart,
     lMixNormWish,
@@ -39,25 +40,23 @@ import Numeric.LinearAlgebra (Vector,
 
 import Numeric.LinearAlgebra.Util  (zeros)
 
-import Partition (Partition, Component, groups)
+import Partition (Partition, Component, groups, group)
+
+import LikSpecLang
 
 type X = [Vector Double]
 
-data Expr i o = Fun (i -> o)
+dlNormW :: X -> (Partition -> Partition -> Double)
+--dlNormW x = delta (Fun (lMixNormWish x))
+dlNormW x = delta (Mixture (Fun (lnormalInvWishart . group x )))
 
-type DeltaLik = Partition -> Partition -> Double
-
-delta :: Expr Partition Double -> DeltaLik
-delta (Fun f) = \x' -> \x -> (f x') - (f x)
-
-dlNormW :: X -> DeltaLik
-dlNormW x = delta (Fun (lMixNormWish x))
-
+lNormW :: X -> (Partition -> Double)
+lNormW x = compile (Mixture (Fun (lnormalInvWishart . group x)))
 
 lMixNormWish :: X -> Partition -> Double
 lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
 
---lnormalInvWishart :: X -> Double
+lnormalInvWishart :: X -> Double
 lnormalInvWishart x = - n * d * 2 * log pi
                       + mlgamma d (vn/2)
                       - mlgamma d (v0/2)
@@ -79,7 +78,6 @@ lnormalInvWishart x = - n * d * 2 * log pi
                             s = scatterMatrix x
                             mu0 = fromRows [head $ toRows $ zeros 1 (round d)] -- hyperparameter
                             xm = fromRows [ fst $ meanCov $ fromRows x ]
-
 
 
 lnormalPrior :: X -> Double

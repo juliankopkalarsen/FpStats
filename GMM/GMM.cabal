@@ -3,8 +3,9 @@ version: 0.0.1
 cabal-version: >=1.2
 build-type: Simple
 license: AllRightsReserved
+license-file: ""
 data-dir: ""
-
+ 
 executable GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -14,8 +15,8 @@ executable GMM
     extensions: MultiParamTypeClasses RankNTypes FlexibleInstances
                 BangPatterns TypeSynonymInstances GADTs GADTSyntax
     hs-source-dirs: src
-    other-modules: Cube Math Partition GMM Distributions
-
+    other-modules: Cube LikSpecLang Math Partition GMM Distributions
+ 
 test-suite test-GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -26,4 +27,5 @@ test-suite test-GMM
     cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: Cube Math Partition Distributions FileParsing
+    other-modules: Cube LikSpecLang Math Partition Distributions
+                   FileParsing
