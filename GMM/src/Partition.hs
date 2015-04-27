@@ -1,24 +1,18 @@
------------------------------------------------------------------------------
---
--- Module      :  Partition
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
+{-|
+Module      : Partition
+Description : Definition of the Partition type and associated functions.
+Copyright   : (c) Julian Kopka Larsen, 2015
+Stability   : experimental
 
+Definition of the Partition type and associated functions.
+-}
 module Partition (
     Partition,
     Component,
     Move,
     select,
     numComponents,
-    naivefromXNk,
+    naivefromNk,
     genMoves,
     applyMove,
     group,
@@ -31,28 +25,34 @@ import Data.List (transpose,
 
 import System.Random
 
-data Move = Move {   node :: Int
-                    ,comp :: Int
-                    } deriving Show
+-- | A 'Move' repressenting the move of an element into a component.
+data Move = Move {node :: Int -- ^ The 'node' to be moved.
+                 ,comp :: Int -- ^ The destination component 'comp'.
+                  } deriving Show
 
 type Partition = [Component]
-                -- |Delta Partition Partition
-                -- deriving Eq
+
 type Component = [Int]
 
-
-naivefromXNk :: Int -> Int -> Partition
-naivefromXNk n k = transpose $ splitEvery k [0..n-1]
+-- | Constructs a 'Partition' with elements assigned to components in cyclic order.
+naivefromNk :: Int -- ^ The n number of elements
+            -> Int -- ^ The k number of components
+            -> Partition
+naivefromNk n k = transpose $ splitEvery k [0..n-1]
 
 splitEvery _ [] = []
 splitEvery n list = first : (splitEvery n rest)
                     where (first,rest) = splitAt n list
 
-blockFromNk :: Int -> Int -> Partition
+-- | Constructs a 'Partition' with elements split in k blocks one after the other.
+blockFromNk :: Int -- ^ The n number of elements
+            -> Int -- ^ The k number of components
+            -> Partition
 blockFromNk n k = [fst s, snd s]
                   where n1 = n `div` k
                         s = splitAt n1 [0..n-1]
 
+-- |Apply a 'Move' to a 'Partition' to create a new 'Partition'
 applyMove :: Partition -> Move -> Partition
 applyMove p m = moveNode c i p
                  where  i = node m
@@ -61,7 +61,7 @@ applyMove p m = moveNode c i p
 moveNode:: Int -> Int -> [[Int]] -> [[Int]]
 moveNode 0 i (x:xs)
     | i `elem` x = x:xs
-    | notElem i x = (i:x):(map (delete i) xs)
+    | i `notElem` x = (i:x):(map (delete i) xs)
 moveNode n i (x:xs) = (delete i x):(moveNode (n-1) i xs)
 
 applyTo :: (a -> a) -> Int -> [a] -> [a]
@@ -72,14 +72,18 @@ genMoves seed n k = zipWith (\i c -> Move {node=i, comp=c})
                             (randomRs (0,n-1) (mkStdGen seed))
                             (randomRs (0,k-1) (mkStdGen seed))
 
+-- | Extract a speccific component from a dataset given a 'Partition' and an index.
 select :: [a] -> Partition -> Int -> [a]
-select x p i = map (x!!) (p!!i)
+select x p i = group x (p!!i)
 
+-- | The number of components in a partition.
 numComponents :: Partition -> Int
 numComponents = length
 
+-- | Extract one component from a dataset.
 group :: [a] -> Component -> [a]
 group x = map (x!!)
 
+-- | Extract all of the components from a dataset.
 groups :: [a] -> Partition -> [[a]]
 groups x = map (group x)

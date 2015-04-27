@@ -1,41 +1,30 @@
------------------------------------------------------------------------------
---
--- Module      :  Distributions
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
-
-
+{-|
+Module      : Distributions
+Description : Definition of the Distributions used in Models and associated functions.
+Copyright   : (c) Julian Kopka Larsen, 2015
+Stability   : experimental
+-}
 module Distributions (
     lnormalInvWishart,
     lMixNormWish,
     delta,
     Expr,
     dlNormW,
-    lnormalPrior
+    lNormW
 ) where
 
-import Math (mlgamma,
-             scatterMatrix)
+import Math (X,
+             mlgamma,
+             scatterMatrix,
+             mean)
 
 import Numeric.LinearAlgebra (Vector,
-                              toList,
                               (<>),
                               invlndet,
                               ident,
                               dim,
-                              fromRows,
                               scale,
                               trans,
-                              toRows,
-                              meanCov,
                               takeDiag)
 
 import Numeric.LinearAlgebra.Util  (zeros)
@@ -44,18 +33,23 @@ import Partition (Partition, Component, groups, group)
 
 import LikSpecLang
 
-type X = [Vector Double]
-
+-- | Delta log Normal-Wishard likelihood for a mixture of components.
 dlNormW :: X -> (Partition -> Partition -> Double)
---dlNormW x = delta (Fun (lMixNormWish x))
-dlNormW x = delta (Mixture (Fun (lnormalInvWishart . group x )))
+dlNormW x = delta (lMixNormWish x)
 
+-- | Log Normal-Wishard likelihood for a mixture of components.
 lNormW :: X -> (Partition -> Double)
-lNormW x = compile (Mixture (Fun (lnormalInvWishart . group x)))
+lNormW x = compile (lMixNormWish x)
 
-lMixNormWish :: X -> Partition -> Double
-lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
+-- | Log Normal-Wishard likelihood for a mixture of components. Same as 'lNormW' but defined without the "LikSpecLang" (LSL)
+lMixNormWish ::X -> Expr Partition Double
+lMixNormWish x = Mixture (Fun (lnormalInvWishart . group x))
+-- lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
 
+lnormw :: Expr X Double
+lnormw = Fun (lnormalInvWishart)
+
+-- | Log Normal-Wishard likelihood for a single component
 lnormalInvWishart :: X -> Double
 lnormalInvWishart x = - n * d * 2 * log pi
                       + mlgamma d (vn/2)
@@ -76,18 +70,5 @@ lnormalInvWishart x = - n * d * 2 * log pi
                             k0 = 0.2 :: Double-- hyperparameter
                             kn = k0 + n
                             s = scatterMatrix x
-                            mu0 = fromRows [head $ toRows $ zeros 1 (round d)] -- hyperparameter
-                            xm = fromRows [ fst $ meanCov $ fromRows x ]
-
-
-lnormalPrior :: X -> Double
-lnormalPrior x = -(n/2)*lDetSigma -(1/2)* tr (invSigma <> s)
-                where n = fromIntegral $ length x
-                      d = dim $ head x
-                      tr m = sum $ toList $ takeDiag m
-                      s = scatterMatrix x
-                      (invSigma,(absLSigma,signLSigma)) = invlndet sigma
-                      lDetSigma = absLSigma * signLSigma
-                      sigma = ident d -- Hyperparameter for the covariance of the cluster
-
-
+                            mu0 = zeros 1 (round d) -- hyperparameter
+                            xm = mean x

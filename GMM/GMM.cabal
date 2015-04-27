@@ -3,9 +3,21 @@ version: 0.0.1
 cabal-version: >=1.2
 build-type: Simple
 license: AllRightsReserved
-license-file: ""
+description: A Gaussian Mixture Model with metropolis hastings inference
 data-dir: ""
- 
+
+library
+    build-depends: MemoTrie -any, QuickCheck -any, array -any,
+                   base -any, containers -any, easyplot -any, hmatrix -any,
+                   hstatistics -any, parsec -any, random -any
+    exposed-modules: LikSpecLang Math Partition Distributions Cube FileParsing
+    exposed: True
+    buildable: True
+    cpp-options: -DMAIN_FUNCTION=testMain
+    extensions: BangPatterns
+    hs-source-dirs: src
+
+
 executable GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -15,8 +27,8 @@ executable GMM
     extensions: MultiParamTypeClasses RankNTypes FlexibleInstances
                 BangPatterns TypeSynonymInstances GADTs GADTSyntax
     hs-source-dirs: src
-    other-modules: Cube LikSpecLang Math Partition GMM Distributions
- 
+    other-modules: Math Partition GMM LikSpecLang Distributions Cube
+
 test-suite test-GMM
     build-depends: MemoTrie -any, QuickCheck -any, array -any,
                    base -any, containers -any, easyplot -any, hmatrix -any,
@@ -27,5 +39,5 @@ test-suite test-GMM
     cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: Cube LikSpecLang Math Partition Distributions
+    other-modules: Math Partition LikSpecLang Distributions Cube
                    FileParsing

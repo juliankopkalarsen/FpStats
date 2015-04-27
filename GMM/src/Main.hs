@@ -1,18 +1,13 @@
-{-# LANGUAGE CPP, TemplateHaskell #-}
------------------------------------------------------------------------------
---
--- Module      :  Main
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
 
+{-# LANGUAGE CPP, TemplateHaskell #-}
+
+{-|
+Module      : Main
+Description : Main module running the GMM
+Copyright   : (c) Julian Kopka Larsen, 2015
+Stability   : experimental
+
+-}
 module Main (
     main
 ) where

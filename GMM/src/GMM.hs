@@ -1,17 +1,11 @@
------------------------------------------------------------------------------
---
--- Module      :  GMM
--- Copyright   :
--- License     :  AllRightsReserved
---
--- Maintainer  :
--- Stability   :
--- Portability :
---
--- |
---
------------------------------------------------------------------------------
+{-|
+Module      : GMM
+Description : Definition of the Gaussian Mixture Model and Metropolis hatings sampler.
+Copyright   : (c) Julian Kopka Larsen, 2015
+Stability   : experimental
 
+
+-}
 module GMM (
     X,
     getElement
@@ -27,10 +21,9 @@ import Numeric.LinearAlgebra.Util hiding ((!))
 import Debug.Trace
 
 import Distributions -- (lnormalInvWishart, lMixNormWish, delta, Expr)
-import Partition (Partition, Component, Move, naivefromXNk, genMoves, applyMove, group)
+import Partition (Partition, Component, Move, naivefromNk, genMoves, applyMove, group)
 
--- Data can be anything as long as it is compatible with the likelihood
-type X = [Vector Double]
+import Math (X)
 
 type Chain = [Partition]
 
@@ -52,12 +45,12 @@ sample f prev_state (m, accept_prop)
 getElement :: X -> Int -> Int -> Int -> Partition
 getElement x seed k nSamples = foldl' sampler start $ take nSamples (props seed n k)
                       where n = length x
-                            start = naivefromXNk n k
+                            start = naivefromNk n k
                             sampler = sample $ acceptanceRatio dq
                             dq = dlNormW x
 
 acceptanceRatio :: (Partition -> Partition -> Double) -> Partition -> Move -> Double
-acceptanceRatio dq x m = exp $ (dq x' x)
+acceptanceRatio dq x m = exp (dq x' x)
                         where x' = applyMove x m
 
 
