@@ -47,7 +47,7 @@ lMixNormWish x = Mixture (Fun (lnormalInvWishart . group x))
 -- lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
 
 lnormw :: Expr X Double
-lnormw = Fun (lnormalInvWishart)
+lnormw = Fun lnormalInvWishart
 
 -- | Log Normal-Wishard likelihood for a single component
 lnormalInvWishart :: X -> Double

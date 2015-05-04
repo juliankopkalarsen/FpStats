@@ -1,5 +1,6 @@
 
-{-# LANGUAGE CPP, TemplateHaskell #-}
+{-# LANGUAGE CPP             #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-|
 Module      : Main
@@ -12,21 +13,20 @@ module Main (
     main
 ) where
 
-import Control.Monad (unless, forM)
-import System.IO (readFile)
-import System.CPUTime
-import Text.Printf
-import Data.List (transpose)
-import System.Exit (exitFailure)
-import Test.QuickCheck.All (quickCheckAll)
-import Graphics.EasyPlot
-import GHC.Arr
-import FileParsing
-import Numeric.Statistics.PCA
-import Numeric.LinearAlgebra
+import           Control.Monad          (forM, unless)
+import           Data.List              (transpose)
+import           FileParsing
+import           GHC.Arr
+import           Graphics.EasyPlot
+import           Numeric.LinearAlgebra
+-- import           Numeric.Statistics.PCA
+import           System.CPUTime
+import           System.Exit            (exitFailure)
+import           System.IO              (readFile)
+import           Text.Printf
 
-import GMM
-import Partition
+import           GMM
+import           Partition
 
 list2Touple (a:b:_) = (a,b)
 list2Touple _ = (0,0)
@@ -67,5 +67,3 @@ main = do
     putStrLn "Starting..."
     time $ p (result num_Samples)
     putStrLn "Done."
-
-

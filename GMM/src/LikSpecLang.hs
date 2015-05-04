@@ -15,6 +15,7 @@ module LikSpecLang (
         Fun,
         Mixture
         ),
+    mix,
     delta,
     compile
 ) where
@@ -23,10 +24,12 @@ import Data.Function
 
 -- |The expression 'Expr' type defines the syntax of the language
 data Expr i o where
-
     Fun :: (i->o) -> Expr i o -- The 'Fun' expression captures an arbitrary function.
     Mixture :: (Num o, Eq a) => Expr a o -> Expr [a] o -- The 'Mixture' expression describes a mixture of an expression over a list of inputs.
 
+
+mix :: (Num o, Eq a) => (a -> o) -> Expr [a] o
+mix f = Mixture (Fun f)
 
 -- | 'compile' turns an 'Expr' type value into its corresponding haskell function.
 compile :: Expr i o -> (i -> o)
@@ -38,4 +41,5 @@ delta :: (Num o) => Expr i o -> (i -> i -> o)
 delta (Mixture e) = \x' x -> sum $ map (uncurry (delta e)) (changed x' x)
         where changed a b = filter (uncurry (/=)) $ zip a b
 
-delta e = (-) `on` compile e -- Works for any case. also Fun f = f x' - f x
+delta e = \x' x -> (f x') - (f x)
+        where f = compile e

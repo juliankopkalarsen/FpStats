@@ -3,41 +3,35 @@ version: 0.0.1
 cabal-version: >=1.2
 build-type: Simple
 license: AllRightsReserved
+license-file: Lfile
 description: A Gaussian Mixture Model with metropolis hastings inference
 data-dir: ""
 
 library
-    build-depends: MemoTrie -any, QuickCheck -any, array -any,
-                   base -any, containers -any, easyplot -any, hmatrix -any,
-                   hstatistics -any, parsec -any, random -any
-    exposed-modules: LikSpecLang Math Partition Distributions Cube FileParsing
+    build-depends: base -any, hmatrix -any, hmatrix-gsl-stats==0.2, hstatistics -any, array -any, parsec -any, random, easyplot
+    exposed-modules: Distributions FileParsing LikSpecLang MCMC Math
+                     Partition
     exposed: True
     buildable: True
-    cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
 
-
 executable GMM
-    build-depends: MemoTrie -any, QuickCheck -any, array -any,
-                   base -any, containers -any, easyplot -any, hmatrix -any,
-                   hstatistics -any, parsec -any, random -any
+    build-depends: base -any, hmatrix -any
     main-is: Main.hs
     buildable: True
     extensions: MultiParamTypeClasses RankNTypes FlexibleInstances
                 BangPatterns TypeSynonymInstances GADTs GADTSyntax
     hs-source-dirs: src
-    other-modules: Math Partition GMM LikSpecLang Distributions Cube
+    other-modules: MCMC Math Partition GMM LikSpecLang Distributions
 
 test-suite test-GMM
-    build-depends: MemoTrie -any, QuickCheck -any, array -any,
-                   base -any, containers -any, easyplot -any, hmatrix -any,
-                   hstatistics -any, parsec -any, random -any
+    build-depends: base -any, hmatrix -any, HUnit -any, test-framework-quickcheck -any,
+                   test-framework-hunit -any, test-framework -any
     type: exitcode-stdio-1.0
-    main-is: Main.hs
+    main-is: Test.hs
     buildable: True
-    cpp-options: -DMAIN_FUNCTION=testMain
     extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: Math Partition LikSpecLang Distributions Cube
-                   FileParsing
+    other-modules: MCMC Math Partition LikSpecLang Distributions
+                   FileParsing Math.Test

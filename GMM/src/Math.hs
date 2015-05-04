@@ -14,7 +14,6 @@ module Math (
 ) where
 
 import Numeric.LinearAlgebra (Matrix, Vector, trans, (<>), fromRows, dim, meanCov)
-import Numeric.LinearAlgebra.Util (zeros)
 
 -- | Type synonym for data objects that can be anything as long as it is compatible with the likelihood
 --   could be extended to a type class with sufficient statistics member functions.
@@ -22,10 +21,10 @@ type X = [Vector Double]
 
 -- | Computes the scatter matrix defined as:
 scatterMatrix :: X -> Matrix Double
-scatterMatrix x = foldl (+) (zeros d d) $ map (\ p -> (p-xm)<>trans (p-xm) ) matrixX
+scatterMatrix x = sum $ map (\ p -> (p-xm)<>trans (p-xm) ) matrixX
                     where n = fromIntegral $ length x :: Double
                           d = fromIntegral $ dim $ head x
-                          xm = fromRows [ fst $ meanCov $ fromRows x ]
+                          xm = mean x
                           matrixX = map (\p -> fromRows [p]) x
 
 -- | Mean of a dataset
