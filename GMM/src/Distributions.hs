@@ -16,18 +16,19 @@ module Distributions (
 import Math (X,
              mlgamma,
              scatterMatrix,
-             mean)
+             meanv,
+             lnDeterminant)
 
 import Numeric.LinearAlgebra (Vector,
                               (<>),
-                              invlndet,
                               ident,
                               dim,
                               scale,
                               trans,
-                              takeDiag)
+                              takeDiag,
+                              outer)
 
-import Numeric.LinearAlgebra.Util  (zeros)
+import Numeric.LinearAlgebra.Data (konst)
 
 import Partition (Partition, Component, groups, group)
 
@@ -43,11 +44,11 @@ lNormW x = compile (lMixNormWish x)
 
 -- | Log Normal-Wishard likelihood for a mixture of components. Same as 'lNormW' but defined without the "LikSpecLang" (LSL)
 lMixNormWish ::X -> Expr Partition Double
-lMixNormWish x = Mixture (Fun (lnormalInvWishart . group x))
--- lMixNormWish x p = sum $ map lnormalInvWishart (groups x p )
+lMixNormWish x = Mixture (Fun lnormalInvWishart) % selection x -- The '%' operator "pipes" expressions together
 
-lnormw :: Expr X Double
-lnormw = Fun lnormalInvWishart
+selection :: X -> Expr Partition [X]
+selection x = Fun (groups x)
+
 
 -- | Log Normal-Wishard likelihood for a single component
 lnormalInvWishart :: X -> Double
@@ -57,18 +58,16 @@ lnormalInvWishart x = - n * d * 2 * log pi
                       + (v0/2) * ldalpha0
                       - (vn/2) * ldalphaN
                       + (d/2) * ((log k0)-(log kn))
-                    where   n = fromIntegral $ length x :: Double
+                    where   n = fromIntegral $ length x
                             d = fromIntegral $ dim $ head x
                             v0 = 100 -- hyperparameter must be (v0 > d)
                             vn = v0 + n
-                            alpha0 = ident $ round d -- hyperparameter for the shape of the covariance matrix
-                            alphaN = alpha0 + s + scale ((k0*n)/(k0+kn)) (xm-mu0)<> trans (xm-mu0)
-                            ldalpha0 = absLnDet * signDet
-                                     where (_,(absLnDet,signDet)) = invlndet alpha0
-                            ldalphaN = absLnDet * signDet
-                                     where (_,(absLnDet,signDet)) = invlndet alphaN
-                            k0 = 0.2 :: Double-- hyperparameter
+                            alpha0 = ident $ dim $ head x -- hyperparameter for the shape of the covariance matrix
+                            alphaN = alpha0 + s + scale ((k0*n)/(k0+kn)) ((xm-mu0) `outer` (xm-mu0))
+                            ldalpha0 = lnDeterminant alpha0
+                            ldalphaN = lnDeterminant alphaN
+                            k0 = 0.2 -- hyperparameter
                             kn = k0 + n
                             s = scatterMatrix x
-                            mu0 = zeros 1 (round d) -- hyperparameter
-                            xm = mean x
+                            mu0 = (konst 0.0 $ dim $ head x ):: Vector Double -- hyperparameter
+                            xm = meanv x
