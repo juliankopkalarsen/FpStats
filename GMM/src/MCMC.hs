@@ -1,3 +1,4 @@
+
 {-|
 Module      : MCMC
 Description : Definition of the Marcov Chain Monte Carlo samplers ie. the Metropolis hatings sampler.
@@ -7,36 +8,49 @@ Stability   : experimental
 
 -}-------------------------------------------------------------------------
 
-module MCMC (
+{-# LANGUAGE MultiParamTypeClasses #-}
 
+module MCMC (
+    Moveable(move),
+    LLikDefined(llikelihood),
+    LikRatioable(llikDiff),
+    getMHChain,
+    getElement
 ) where
 
-import System.Random
+import System.Random (RandomGen, split, randomR)
+import Data.List (foldl')
+import Debug.Trace
 
-class Moveable m where
+class (Show m) => Moveable m where
     move :: (RandomGen r) => r -> m -> m
 
-class LikRatioable m where
-    likRatio :: (Ord a)=> m -> m -> a
+class LLikDefined m d where
+    llikelihood :: d -> m -> Double
 
---getElement
---getElement x seed k nSamples = foldl' sampler start $ take nSamples (props seed n k)
---                      where n = length x
---                            start = naivefromNk n k
---                            sampler = sample $ acceptanceRatio dq
---                            dq = dlNormW x
+class (LLikDefined m d)=> LikRatioable m d where
+    llikDiff :: d -> m -> m -> Double
 
 unitSample :: (RandomGen r)=> r -> Double
 unitSample g = fst $ randomR (0.0, 1.0) g
 
-sample :: (RandomGen r, Moveable a, LikRatioable a) => r -> a -> a
-sample gen prev_state
-    | unitSample genSample < alpha  = new_state -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Accepted: " ++ show (f a m)) b
-    | otherwise                 = prev_state -- trace ("(" ++ (show $ a!(node m)) ++ "->" ++ (show $ comp m) ++   ")" ++ "Rejected: " ++ show (f a m)) a
-                                where alpha = likRatio prev_state new_state
-                                      new_state = move genMove prev_state
-                                      (genMove, genSample) = split gen
+sample :: (RandomGen r, Moveable a, LikRatioable a d) => d -> a -> r -> a
+sample x prev_state gen
+    | unitSample sampleGen < alpha  = new_state -- trace ("accepted, llik: " ++ show llik ++ "a: " ++ show alpha) new_state
+    | otherwise                     = prev_state -- trace ("rejected, llik: " ++ show llik ++ "a: " ++ show alpha) prev_state
+                                where alpha = exp $ llikDiff x new_state prev_state
+                                      new_state = move moveGen prev_state
+                                      (moveGen, sampleGen) = split gen
+                                      llik = llikelihood x new_state
 
-getMHChain :: (RandomGen r, Moveable a, LikRatioable a) => r -> a -> [a]
-getMHChain gen start = start:getMHChain  ra (sample rb start)
-                     where (ra, rb) = split gen
+getMHChain :: (RandomGen r, Moveable a, LikRatioable a d) => r -> d -> a -> [a]
+getMHChain gen x start = start:getMHChain aGen x (sample x start bGen)
+                     where (aGen, bGen) = split gen
+
+getElement :: (RandomGen r, Moveable a, LikRatioable a d) => r -> d -> a -> Int -> a
+getElement gen x start n = foldl' sample_parameters start (take n $ randoms gen)
+            where sample_parameters = sample x
+
+randoms:: (RandomGen r)=> r-> [r]
+randoms g = a:(randoms b)
+            where (a,b) = split g

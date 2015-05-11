@@ -10,10 +10,12 @@ module Math (
     X,
     mlgamma,
     scatterMatrix,
-    mean
+    mean,
+    meanv,
+    lnDeterminant
 ) where
 
-import Numeric.LinearAlgebra (Matrix, Vector, trans, (<>), fromRows, dim, meanCov)
+import Numeric.LinearAlgebra (Matrix, Vector, trans, (<>), fromRows, dim, meanCov, invlndet, outer)
 
 -- | Type synonym for data objects that can be anything as long as it is compatible with the likelihood
 --   could be extended to a type class with sufficient statistics member functions.
@@ -21,15 +23,25 @@ type X = [Vector Double]
 
 -- | Computes the scatter matrix defined as:
 scatterMatrix :: X -> Matrix Double
-scatterMatrix x = sum $ map (\ p -> (p-xm)<>trans (p-xm) ) matrixX
-                    where n = fromIntegral $ length x :: Double
-                          d = fromIntegral $ dim $ head x
-                          xm = mean x
-                          matrixX = map (\p -> fromRows [p]) x
+scatterMatrix x = sum $ map (\v -> outer (v-xm) (v-xm)) x
+                where xm = meanv x
+
+--scatterMatrix x = sum $ map (\p -> (p-xm)<>trans (p-xm) ) matrixX
+--                    where n = fromIntegral $ length x :: Double
+--                          d = fromIntegral $ dim $ head x
+--                          xm = mean x
+--                          matrixX = map (\p -> fromRows [p]) x
 
 -- | Mean of a dataset
 mean :: [Vector Double] -> Matrix Double
-mean x = fromRows [ fst $ meanCov $ fromRows x ]
+mean x = fromRows [meanv x]
+
+meanv :: [Vector Double] -> Vector Double
+meanv = fst . meanCov . fromRows
+
+lnDeterminant :: Matrix Double -> Double
+lnDeterminant x = absLnDet * signDet
+        where (_,(absLnDet,signDet)) = invlndet x
 
 
 cofG :: [Double]
