@@ -49,7 +49,7 @@ qtr x = trace ("value: " ++ show x) x
 data State = State (Partition,[Sstat]) deriving Show
 
 instance Sampleable State X where
-    condMove x g (State (p,s)) = State (newPar, test)
+    condMove x g (State (p,s)) = State (newPar, recalc)
                   where newPar = move g p
                         update = ss' x p s newPar
                         recalc = ss x newPar

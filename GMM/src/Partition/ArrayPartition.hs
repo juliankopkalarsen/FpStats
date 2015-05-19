@@ -1,0 +1,1 @@
+module Partition.ArrayPartition where
