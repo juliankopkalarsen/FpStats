@@ -6,6 +6,7 @@ Stability   : experimental
 -}
 module Distributions (
     lnormalInvWishart,
+    lnormalInvWishartSS,
     lMixNormWish,
     delta,
     Expr,
@@ -19,7 +20,8 @@ import Math (X,
              meanv,
              lnDeterminant)
 
-import Numeric.LinearAlgebra (Vector,
+import Numeric.LinearAlgebra (Matrix,
+                              Vector,
                               (<>),
                               ident,
                               dim,
@@ -28,7 +30,7 @@ import Numeric.LinearAlgebra (Vector,
                               takeDiag,
                               outer)
 
-import Numeric.LinearAlgebra.Data (konst)
+import Numeric.LinearAlgebra.Data (konst, size)
 
 import Partition (Partition, Component, groups, group)
 
@@ -48,6 +50,27 @@ lMixNormWish x = Mixture (Fun lnormalInvWishart) % selection x -- The '%' operat
 
 selection :: X -> Expr Partition [X]
 selection x = Fun (groups x)
+
+
+-- | Log Normal-Wishard likelihood for a single component
+lnormalInvWishartSS :: Int -> Matrix Double -> Vector Double-> Double
+lnormalInvWishartSS n s mu = - fromIntegral n * d * 2 * log pi
+                      + mlgamma d (vn/2)
+                      - mlgamma d (v0/2)
+                      + (v0/2) * ldalpha0
+                      - (vn/2) * ldalphaN
+                      + (d/2) * ((log k0)-(log kn))
+                    where   d = fromIntegral $ fst $ size s :: Double
+                            v0 = 100 -- hyperparameter must be (v0 > d)
+                            vn = v0 + fromIntegral n
+                            alpha0 = ident $ fst $ size s -- hyperparameter for the shape of the covariance matrix
+                            alphaN = alpha0 + s + scale ((k0*fromIntegral n)/(k0+kn)) ((mu-mu0) `outer` (mu-mu0))
+                            ldalpha0 = lnDeterminant alpha0
+                            ldalphaN = lnDeterminant alphaN
+                            k0 = 0.2 -- hyperparameter
+                            kn = k0 + fromIntegral n
+                            mu0 = (konst 0.0 $ fst $ size s ):: Vector Double -- hyperparameter
+
 
 
 -- | Log Normal-Wishard likelihood for a single component
