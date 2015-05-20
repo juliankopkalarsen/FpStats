@@ -49,12 +49,9 @@ qtr x = trace ("value: " ++ show x) x
 data State = State (Partition,[Sstat]) deriving Show
 
 instance Sampleable State X where
-    condMove x g (State (p,s)) = State (newPar, recalc)
+    condMove x g (State (p,s)) = State (newPar, update)
                   where newPar = move g p
                         update = ss' x p s newPar
-                        recalc = ss x newPar
-                        test | update == recalc = update
-                             | otherwise = error ("update not working, \n recalc: " ++ show recalc ++ "\n update: " ++ show update)
 
     llikelihood _ (State (_,s)) = sum $ map (\(i,m,v) -> lnormalInvWishartSS i m v) s
     llikDiff _ (State (_,s')) (State (_,s))

@@ -20,7 +20,7 @@ module Math (
     AbelianGroup((<+>), (<->)),
     mlgamma,
     scatterMatrix,
-    scatterMatrix_alt,
+    scatterMatrixAlt,
     mean,
     meanv,
     lnDeterminant
@@ -44,12 +44,12 @@ class AbelianGroup a where
 type X = [Vector Double]
 
 -- | Computes the scatter matrix defined as:
-scatterMatrix_alt :: X -> Matrix Double
-scatterMatrix_alt x = sum $ map (\v -> outer (v-xm) (v-xm)) x
+scatterMatrixAlt :: X -> Matrix Double
+scatterMatrixAlt x = sum $ map (\v -> outer (v-xm) (v-xm)) x
                 where xm = meanv x
 
 scatterMatrix :: X -> Matrix Double
-scatterMatrix x = (sum $ map (\v -> outer v v) x) - scale n (outer xm xm)
+scatterMatrix x = sum (map (\ v -> outer v v) x) - scale n (outer xm xm)
                     where xm = meanv x
                           n = fromIntegral $ length x
 
@@ -111,14 +111,14 @@ add_scatter ia sa ma ib sb mb = sa + sb + (scale na xaa) + (scale nb xbb) - (sca
 sub_scatter :: Int -> Matrix Double -> Vector Double -> Int -> Matrix Double -> Vector Double -> Matrix Double
 sub_scatter 0 _ _ n _ _ = error "Nothing to subtract from."
 sub_scatter _ sa _ 0 _ _ = sa
-sub_scatter ia sa ma ib sb mb | ia==ib = scatterMatrix []
--- sub_scatter ia sa ma ib sb mb | ia-ib==1 = konst 0 (size sa)
+sub_scatter ia sa ma ib sb mb | ia==ib = scatterMatrix [ma]
+sub_scatter ia sa ma ib sb mb | ia-ib==1 = konst 0 (size sa)
 sub_scatter ia sa ma ib sb mb = sa - sb + (scale na xaa) - (scale nb xbb) - (scale n xx)
         where na = fromIntegral ia
               nb = fromIntegral ib
               xaa = outer ma ma
               xbb = outer mb mb
-              mx = add_means ia ma ib mb
+              mx = sub_means ia ma ib mb
               xx = outer mx mx
               n = na - nb
 

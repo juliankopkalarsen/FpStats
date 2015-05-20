@@ -56,7 +56,7 @@ instance (AEq a, Storable a)=> AEq (Vector a) where
 instance AEq (Matrix Double) where
     x ~== y = (flatten x) ~== (flatten y)
 
-scatter_alternative x = length x > 0 ==> scatterMatrix x ~== scatterMatrix_alt x
+scatter_alternative x = length x > 0 ==> scatterMatrix x ~== scatterMatrixAlt x
             where types = (x::X)
 
 meanProp1 x = meanv [x] == x
