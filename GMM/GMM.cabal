@@ -42,8 +42,8 @@ executable GMM
         "-with-rtsopts=-N -p -s -h -i0.1"
 
 test-suite test-GMM
-    build-depends: base -any, hmatrix -any, HUnit -any, QuickCheck -any, test-framework-quickcheck -any,
-                   test-framework-hunit -any, test-framework -any
+    build-depends: base -any, hmatrix -any, HUnit -any, QuickCheck -any, test-framework-quickcheck2 -any,
+                   test-framework-hunit -any, test-framework -any, ieee754 -any
     type: exitcode-stdio-1.0
     main-is: Test.hs
     buildable: True
