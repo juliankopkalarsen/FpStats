@@ -13,7 +13,11 @@ module LikSpecLang (
     Expr (
         Fun,
         Mixture,
-        Pipe
+        Pipe,
+        Const,
+        Add,
+        Sub,
+        Mul
         ),
     mix,
     (%),
@@ -28,6 +32,21 @@ data Expr i o where
     Fun :: (i->o) -> Expr i o -- The 'Fun' expression captures an arbitrary function.
     Mixture :: (Num o, Eq a) => Expr a o -> Expr [a] o -- The 'Mixture' expression describes a mixture of an expression over a list of inputs.
     Pipe :: Expr a o -> Expr i a -> Expr i o
+    Const :: o -> Expr i o
+    Add :: (Num oa, Num ob)=> Expr ia oa -> Expr ib ob -> Expr i o
+    Sub :: (Num oa, Num ob)=> Expr ia oa -> Expr ib ob -> Expr i o
+    Mul :: (Num oa, Num ob)=> Expr ia oa -> Expr ib ob -> Expr i o
+
+c :: o -> Expr () o
+c n = Const n
+
+instance (Num o) => Num (Expr i o) where
+    a + b = Add a b
+    a - b = Sub a b
+    a * b = Mul a b
+    abs e = Fun abs % e
+    signum e = Fun signum % e
+    fromInteger n = Const (fromInteger n)
 
 (%) :: Expr a o -> Expr i a -> Expr i o
 b % a = Pipe b a

@@ -32,36 +32,11 @@ import Debug.Trace
 import Data.List ((\\))
 import Partition (group)
 
+import Math.AbelianGroup
+import Math.SummaryStats
+
 qtr x = trace ("value: " ++ show x) x
 
--- | Class for the
-class AbelianGroup a where
-    (<+>) :: a -> a -> a
-    (<->) :: a -> a -> a
-
--- | Type synonym for data objects that can be anything as long as it is compatible with the likelihood
---   could be extended to a type class with sufficient statistics member functions.
-type X = [Vector Double]
-
--- | Computes the scatter matrix defined as:
-scatterMatrixAlt :: X -> Matrix Double
-scatterMatrixAlt x = sum $ map (\v -> outer (v-xm) (v-xm)) x
-                where xm = meanv x
-
-scatterMatrix :: X -> Matrix Double
-scatterMatrix x = sum (map (\ v -> outer v v) x) - scale n (outer xm xm)
-                    where xm = meanv x
-                          n = fromIntegral $ length x
-
--- | Mean of a dataset
-mean :: [Vector Double] -> Matrix Double
-mean x = fromRows [meanv x]
-
-meanv :: [Vector Double] -> Vector Double
-meanv x = scale (1/(fromIntegral $ length x))(sum x)
-
-dimension :: [Vector Double] -> Int
-dimension = dim . head
 
 type Sstat = (Int, Matrix Double, Vector Double)
 
@@ -121,6 +96,31 @@ sub_scatter ia sa ma ib sb mb = sa - sb + (scale na xaa) - (scale nb xbb) - (sca
               mx = sub_means ia ma ib mb
               xx = outer mx mx
               n = na - nb
+
+
+-- | Type synonym for data objects that can be anything as long as it is compatible with the likelihood
+--   could be extended to a type class with sufficient statistics member functions.
+type X = [Vector Double]
+
+-- | Computes the scatter matrix defined as:
+scatterMatrixAlt :: X -> Matrix Double
+scatterMatrixAlt x = sum $ map (\v -> outer (v-xm) (v-xm)) x
+                where xm = meanv x
+
+scatterMatrix :: X -> Matrix Double
+scatterMatrix x = sum (map (\ v -> outer v v) x) - scale n (outer xm xm)
+                    where xm = meanv x
+                          n = fromIntegral $ length x
+
+-- | Mean of a dataset
+mean :: [Vector Double] -> Matrix Double
+mean x = fromRows [meanv x]
+
+meanv :: [Vector Double] -> Vector Double
+meanv x = scale (1/(fromIntegral $ length x))(sum x)
+
+dimension :: [Vector Double] -> Int
+dimension = dim . head
 
 
 lnDeterminant :: Matrix Double -> Double

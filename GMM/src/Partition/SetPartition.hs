@@ -1,1 +1,1 @@
-module MCMC.SetPartition where
+module Partition.SetPartition where
