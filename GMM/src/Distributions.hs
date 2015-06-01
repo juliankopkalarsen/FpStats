@@ -6,15 +6,11 @@ Stability   : experimental
 -}
 module Distributions (
     lnormalInvWishart,
-    lnormalInvWishartSS,
-    lMixNormWish,
-    delta,
-    Expr,
-    dlNormW,
-    lNormW
+    lnormalInvWishartSS
 ) where
 
 import Math (X,
+             Sstat,
              mlgamma,
              scatterMatrix,
              meanv,
@@ -36,25 +32,10 @@ import Partition (Partition, Component, groups, group)
 
 import LikSpecLang
 
--- | Delta log Normal-Wishard likelihood for a mixture of components.
-dlNormW :: X -> (Partition -> Partition -> Double)
-dlNormW x = delta (lMixNormWish x)
-
--- | Log Normal-Wishard likelihood for a mixture of components.
-lNormW :: X -> (Partition -> Double)
-lNormW x = compile (lMixNormWish x)
-
--- | Log Normal-Wishard likelihood for a mixture of components. Same as 'lNormW' but defined without the "LikSpecLang" (LSL)
-lMixNormWish ::X -> Expr Partition Double
-lMixNormWish x = Mixture (Fun lnormalInvWishart) % selection x -- The '%' operator "pipes" expressions together
-
-selection :: X -> Expr Partition [X]
-selection x = Fun (groups x)
-
 
 -- | Log Normal-Wishard likelihood for a single component
-lnormalInvWishartSS :: Int -> Matrix Double -> Vector Double-> Double
-lnormalInvWishartSS n s mu = - fromIntegral n * d * 2 * log pi
+lnormalInvWishartSS :: Sstat -> Double
+lnormalInvWishartSS (n, s, mu) = - fromIntegral n * d * 2 * log pi
                       + mlgamma d (vn/2)
                       - mlgamma d (v0/2)
                       + (v0/2) * ldalpha0

@@ -28,6 +28,7 @@ class Sampleable a d where
     condMove ::(RandomGen r) => d -> r -> a -> a
     llikelihood :: d -> a -> Double
     llikDiff :: d -> a -> a -> Double
+    -- llikDiff d a a' = (llikelihood d a) - (llikelihood d a')
 
 unitSample :: (RandomGen r)=> r -> Double
 unitSample g = fst $ randomR (0.0, 1.0) g

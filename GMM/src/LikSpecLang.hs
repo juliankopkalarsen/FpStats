@@ -9,46 +9,38 @@ In this module the Likelihood Specification Language is defined.
 
 {-#LANGUAGE GADTs #-}
 
+
 module LikSpecLang (
-    Expr (
-        Fun,
-        Mixture,
-        Pipe
-        ),
-    mix,
-    (%),
-    delta,
-    compile
+    simplify,
+    reduce,
+    delta
 ) where
 
-import Data.Function
+import Language.Haskell.TH
+import Control.Monad (liftM)
 
--- |The expression 'Expr' type defines the syntax of the language
-data Expr i o where
-    Fun :: (i->o) -> Expr i o -- The 'Fun' expression captures an arbitrary function.
-    Mixture :: (Num o, Eq a) => Expr a o -> Expr [a] o -- The 'Mixture' expression describes a mixture of an expression over a list of inputs.
-    Pipe :: Expr a o -> Expr i a -> Expr i o
+class Simplify a where
+    simplify :: a -> a
 
-(%) :: Expr a o -> Expr i a -> Expr i o
-b % a = Pipe b a
+instance Simplify a => Simplify (Q a) where
+    simplify = liftM simplify
 
-mix :: (Num o, Eq i) => (i->o) -> Expr [i] o
-mix f = Mixture (Fun f)
+instance Simplify a => Simplify [a] where
+    simplify = map simplify
 
--- | 'compile' turns an 'Expr' type value into its corresponding haskell function.
-compile :: Expr i o -> (i -> o)
-compile (Fun f) = f
-compile (Mixture e) = sum . map (compile e)
-compile (Pipe a b) = (compile a) . (compile b)
+instance Simplify Exp where
+    simplify (AppE e1 e2) = AppE (simplify e1) (simplify e2)
+    simplify e = e
+
+reduce :: Exp -> Exp
+reduce (LamE [VarP a, VarP b] e) = LamE [VarP a, VarP b] e
+reduce exp = exp
 
 -- | 'delta' compiles an expression to a haskell function that computes a difference.
-delta :: (Num o) => Expr i o -> (i -> i -> o)
-delta (Pipe a b) = \x' x -> f' (g x') (g x)
-        where f' = delta a
-              g = compile b
+delta :: Exp -> Exp
+delta e@(LamE [VarP a, VarP b] _) = [|\a b b' -> ($e a b') - ($e a b) |]
+--delta e@(LamE [VarP a, VarP b] _) = LamE [VarP a, VarP b, VarP b'] (AppE (AppE (VarE (mkName "-")) l') l)
+ --   where b' = mkName "b'"
+ --         l = AppE (AppE e (VarE a)) (VarE b)
+  --        l' = AppE (AppE e (VarE a)) (VarE b')
 
-delta (Mixture e) = \x' x -> sum $ map (uncurry (delta e)) (changed x' x)
-        where changed a b = filter (uncurry (/=)) $ zip a b
-
-delta e = \x' x -> (f x') - (f x)
-        where f = compile e

@@ -19,19 +19,18 @@ import           FileParsing
 import           GHC.Arr (range)
 import           Graphics.EasyPlot
 import           Numeric.LinearAlgebra
--- import           Numeric.Statistics.PCA
+
 import           System.CPUTime
 import           System.Exit            (exitFailure)
 import           System.IO              (readFile)
 import           Text.Printf
 import           System.Random (mkStdGen)
-import Debug.Trace
-
-
+import           Debug.Trace
 import           MCMC
 import           Partition
 import           Math
-import           Distributions (lNormW, dlNormW,lnormalInvWishartSS)
+import           Distributions (lnormalInvWishartSS)
+import           LikSpecLang
 
 list2Touple (a:b:_) = (a,b)
 list2Touple _ = (0,0)
@@ -46,17 +45,11 @@ plotClusters x p = map toplot $ range (0,((k p)-1))
 
 qtr x = trace ("value: " ++ show x) x
 
-data State = State (Partition,[Sstat]) deriving Show
 
-instance Sampleable State X where
-    condMove x g (State (p,s)) = State (newPar, update)
-                  where newPar = move g p
-                        update = ss' x p s newPar
-
-    llikelihood _ (State (_,s)) = sum $ map (\(i,m,v) -> lnormalInvWishartSS i m v) s
-    llikDiff _ (State (_,s')) (State (_,s))
-                = f s' - f s
-                where f s = sum $ map (\(i,m,v) -> lnormalInvWishartSS i m v) s
+instance Sampleable Partition X where
+    condMove _ r p = move r p
+    llikelihood d p = sum $ map lnormalInvWishartSS (ss d p)
+    llikDiff d p p' = (sum $ map lnormalInvWishartSS (ss d p')) - (sum $ map lnormalInvWishartSS (ss d p))
 
 ss :: X -> Partition -> [Sstat]
 ss x part = zip3 csizes scatters means
@@ -65,28 +58,10 @@ ss x part = zip3 csizes scatters means
                   means = map meanv xs
                   xs = groups x part
 
-ss' :: X -> Partition -> [Sstat] -> Partition -> [Sstat]
-ss' x par s npar = map go $ zip3 (p par) s (p npar)
-        where go (c1, s, c2)
-               | c1 == c2 = s
-               | otherwise = updateSstat x c1 s c2
-
-ssComponent :: X -> [Int] -> Sstat
-ssComponent x []= (0, konst 0 (d,d), konst 0 d)
-                where  d = dim $ head x
-ssComponent x c = (length c, scatterMatrix xs, meanv xs)
-                where  xs = group x c
-
-updateSstat :: X -> [Int] -> Sstat -> [Int] -> Sstat
-updateSstat x c1 s c2 = (s <-> removed) <+> added
-                where removed =  (ssComponent x (c1\\c2))
-                      added =   (ssComponent x (c2\\c1))
-
 gmmElement :: X -> Int -> Int -> Int -> Partition
 gmmElement x seed k num = p
-          where State (p,_) = getElement gen x start num
+          where p = getElement gen x startP num
                 gen = mkStdGen seed
-                start = State (startP, ss x startP)
                 startP = naiveFromNk n k
                 n = length x
 
