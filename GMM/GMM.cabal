@@ -19,6 +19,8 @@ library
     ghc-options:
         -O2
         -threaded
+        -ddump-to-file
+        -ddump-splices
         -fprof-auto
         -auto-all
         "-with-rtsopts=-N -p -s -h -i0.1"
@@ -35,6 +37,8 @@ executable GMM
     ghc-options:
         -O2
         -threaded
+        -ddump-to-file
+        -ddump-splices
         -fprof-auto
         -auto-all
         "-with-rtsopts=-N -p -s -h -i0.1"

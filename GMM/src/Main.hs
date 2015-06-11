@@ -29,7 +29,7 @@ import           Debug.Trace
 import           MCMC
 import           Partition
 import           Math
-import           Distributions (lnormalInvWishartSS)
+import           Distributions (lnormalInvWishartSS, lnormalInvWishart)
 import           LikSpecLang
 
 list2Touple (a:b:_) = (a,b)
@@ -45,11 +45,10 @@ plotClusters x p = map toplot $ range (0,((k p)-1))
 
 qtr x = trace ("value: " ++ show x) x
 
-
 instance Sampleable Partition X where
     condMove _ r p = move r p
-    llikelihood d p = sum $ map lnormalInvWishartSS (ss d p)
-    llikDiff d p p' = (sum $ map lnormalInvWishartSS (ss d p')) - (sum $ map lnormalInvWishartSS (ss d p))
+    llikelihood = $(simplify [|\d p -> sum . map lnormalInvWishart $ groups d p|])
+    llikDiff  = $(delta [|\d p -> sum . map lnormalInvWishart $ groups d p|])
 
 ss :: X -> Partition -> [Sstat]
 ss x part = zip3 csizes scatters means
