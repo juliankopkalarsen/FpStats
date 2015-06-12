@@ -32,8 +32,14 @@ instance Simplify a => Simplify [a] where
     simplify = map simplify
 
 instance Simplify Exp where
+    simplify (LamE ps e) = LamE ps (simplify e)
+    simplify (AppE (AppE (VarE fname) e1) e2) | fname == '($) = simplify (AppE e1 e2)
+    simplify (InfixE (Just e1) f (Just e2)) = simplify (AppE (AppE f e1) e2)
     simplify (AppE e1 e2) = AppE (simplify e1) (simplify e2)
     simplify e = e
+
+
+
 
 -- | Delta definitions. 'delta' converts an expression to a haskell function that computes a difference.
 class Delta a where
@@ -46,13 +52,14 @@ instance Delta a => Delta [a] where
     delta = map delta
 
 instance Delta Exp where
-    delta (LamE [VarP d,VarP p] (InfixE (Just (InfixE (Just (VarE sum)) (VarE (.)) (Just (AppE (VarE map) (f))))) (VarE ($)) (Just (AppE (AppE (select) (dE)) (pE))))) = LamE [VarP d, (TupP [VarP p, VarP p'] ) ] (AppE (AppE (AppE (VarE (.)) (VarE sum)) (AppE (VarE map) (delta f))) changed)
+    delta (LamE [dP@(VarP d),pP@(VarP p)] (AppE (VarE sumName) (AppE (AppE (VarE mapName)  f) l)))
+            | sumName=='sum && mapName == 'map = LamE [dP, (TupP [pP, p'P] ) ] (AppE (VarE sumName) (AppE (AppE (VarE mapName) (delta f)) changed))
             where p' = mkName "p'"
+                  p'P = VarP p'
                   pE = VarE p
                   p'E = VarE p'
-                  selectOnD = (AppE (select) (VarE d))
-                  z = AppE (AppE (VarE (mkName "zip")) (AppE selectOnD pE)) (AppE selectOnD p'E)
-                  changed = AppE (AppE (VarE (mkName "filter")) (AppE (VarE (mkName "uncurry")) (VarE (mkName "/=")))) z
+                  z = AppE (AppE (VarE (mkName "zip")) l) (replaceName (p,p') l)
+                  changed = AppE (AppE filterE (AppE uncurryE (VarE (mkName "/=")))) z
 
     delta e@(LamE [VarP a, VarP b] _) = LamE [VarP a, (TupP [VarP b, VarP b'] ) ] (AppE (AppE (VarE (mkName "-")) l') l)
             where a = mkName "a"
@@ -66,15 +73,20 @@ instance Delta Exp where
                   l = AppE  e (VarE b)
                   l' = AppE e (VarE b')
 
+filterE = VarE (mkName "filter")
+uncurryE = VarE (mkName "uncurry")
 
 
 
--- qdelta :: Q Exp -> Q Exp
--- qdelta e = [|\d (p, p') -> ($e d p')-($e d p) |]
--- pattern matching in Q with quasiquotes is not available
+replaceName :: (Name,Name) -> Exp -> Exp
+replaceName (n,n') (VarE n1) | n1==n = VarE n'
+replaceName (n,n') (ConE n1) | n1==n = ConE n'
+replaceName names (AppE e1 e2) = AppE (replaceName names e1) (replaceName names e2)
+replaceName (n,n') e = e
 
---LamE [VarP d,VarP p] (InfixE (Just (InfixE (Just (VarE Data.List.sum)) (VarE .) (Just (AppE (VarE map) (f))))) (VarE $) (Just (AppE (AppE (ss) (VarE d)) (VarE p))))
 
 
---LamE [VarP k_15,VarP f_16] (AppE (AppE (AppE (VarE GHC.Base..) (VarE Data.List.sum)) (AppE (VarE GHC.Base.map) fE)) lE)
+
+
+
 

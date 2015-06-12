@@ -47,8 +47,8 @@ qtr x = trace ("value: " ++ show x) x
 
 instance Sampleable Partition X where
     condMove _ r p = move r p
-    llikelihood = $(simplify [|\d p -> sum . map lnormalInvWishart $ groups d p|])
-    llikDiff  = $(delta [|\d p -> sum . map lnormalInvWishart $ groups d p|])
+    llikelihood = $(simplify [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
+    llikDiff  = $((delta . simplify) [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
 
 ss :: X -> Partition -> [Sstat]
 ss x part = zip3 csizes scatters means
@@ -77,10 +77,10 @@ time a = do
 main = do
     --contents <- readFile "../../Data/AccidentData.csv"
     --contents <- readFile "../../Data/2Clusters.csv"
-    --contents <- readFile "../../Data/synthetic.6clust.csv"
-    contents <- readFile "../../Data/synth2c2d.csv"
+    contents <- readFile "../../Data/synthetic.6clust.csv"
+    --contents <- readFile "../../Data/synth2c2d.csv"
 
-    let num_Components = 2
+    let num_Components = 6
         num_Samples = 4000
         stdData = p2NormList contents
         result = gmmElement stdData 1 num_Components
