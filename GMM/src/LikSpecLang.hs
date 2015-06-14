@@ -17,9 +17,9 @@ module LikSpecLang (
 ) where
 
 import Language.Haskell.TH
+import Language.Haskell.TH.Syntax (showName)
 import Control.Monad (liftM)
 import Data.List
-
 
 -- | Simplify class definitions
 class Simplify a where
@@ -38,9 +38,6 @@ instance Simplify Exp where
     simplify (AppE e1 e2) = AppE (simplify e1) (simplify e2)
     simplify e = e
 
-
-
-
 -- | Delta definitions. 'delta' converts an expression to a haskell function that computes a difference.
 class Delta a where
     delta :: a -> a
@@ -52,41 +49,41 @@ instance Delta a => Delta [a] where
     delta = map delta
 
 instance Delta Exp where
-    delta (LamE [dP@(VarP d),pP@(VarP p)] (AppE (VarE sumName) (AppE (AppE (VarE mapName)  f) l)))
-            | sumName=='sum && mapName == 'map = LamE [dP, (TupP [pP, p'P] ) ] (AppE (VarE sumName) (AppE (AppE (VarE mapName) (delta f)) changed))
-            where p' = mkName "p'"
+    delta (LamE [dP@(VarP d),pP@(VarP p)] (AppE sumE (AppE (AppE mapE  f) l))) =
+                    LamE [dP, (TupP [pP, p'P] ) ] (AppE sumE (AppE (AppE mapE (delta f)) changed))
+            where p' = alternativeName p
                   p'P = VarP p'
                   pE = VarE p
                   p'E = VarE p'
-                  z = AppE (AppE (VarE (mkName "zip")) l) (replaceName (p,p') l)
-                  changed = AppE (AppE filterE (AppE uncurryE (VarE (mkName "/=")))) z
+                  z = AppE (AppE zipE l) (replaceName (p,p') l)
+                  changed = AppE (AppE filterE (AppE uncurryE neqE)) z
 
     delta e@(LamE [VarP a, VarP b] _) = LamE [VarP a, (TupP [VarP b, VarP b'] ) ] (AppE (AppE (VarE (mkName "-")) l') l)
-            where a = mkName "a"
-                  b = mkName "b"
-                  b' = mkName "b'"
+            where b' = alternativeName b
                   l = AppE (AppE e (VarE a)) (VarE b)
                   l' = AppE (AppE e (VarE a)) (VarE b')
-    delta e= LamE [(TupP [VarP b, VarP b'] ) ] (AppE (AppE (VarE (mkName "-")) l') l)
+
+    delta e = LamE [(TupP [VarP b, VarP b'] ) ] (AppE (AppE minusE l') l)
             where b = mkName "b"
                   b' = mkName "b'"
                   l = AppE  e (VarE b)
                   l' = AppE e (VarE b')
 
-filterE = VarE (mkName "filter")
-uncurryE = VarE (mkName "uncurry")
+alternativeName :: Name -> Name
+alternativeName name = mkName ((showName name) ++ "'")
 
-
+filterE = VarE 'filter
+uncurryE = VarE 'uncurry
+sumE = VarE 'sum
+mapE = VarE 'map
+dollarE = VarE '($)
+zipE = VarE 'zip
+neqE = VarE '(/=)
+minusE = VarE '(-)
 
 replaceName :: (Name,Name) -> Exp -> Exp
 replaceName (n,n') (VarE n1) | n1==n = VarE n'
 replaceName (n,n') (ConE n1) | n1==n = ConE n'
 replaceName names (AppE e1 e2) = AppE (replaceName names e1) (replaceName names e2)
 replaceName (n,n') e = e
-
-
-
-
-
-
 

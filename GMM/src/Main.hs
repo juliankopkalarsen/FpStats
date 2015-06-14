@@ -50,13 +50,6 @@ instance Sampleable Partition X where
     llikelihood = $(simplify [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
     llikDiff  = $((delta . simplify) [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
 
-ss :: X -> Partition -> [Sstat]
-ss x part = zip3 csizes scatters means
-            where csizes = componentSizes part
-                  scatters = map scatterMatrix xs
-                  means = map meanv xs
-                  xs = groups x part
-
 gmmElement :: X -> Int -> Int -> Int -> Partition
 gmmElement x seed k num = p
           where p = getElement gen x startP num
