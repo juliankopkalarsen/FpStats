@@ -8,7 +8,7 @@ Stability   : experimental
 
 -}-------------------------------------------------------------------------
 
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE MultiParamTypeClasses, BangPatterns #-}
 
 module MCMC (
     Moveable(move),
@@ -19,6 +19,9 @@ module MCMC (
 
 import System.Random (RandomGen, split, randomR)
 import Data.List (foldl')
+import Math.Combinat.Partitions
+import Math
+import Debug.Trace
 
 
 class Moveable m where
@@ -34,8 +37,8 @@ unitSample :: (RandomGen r)=> r -> Double
 unitSample g = fst $ randomR (0.0, 1.0) g
 
 sample :: (RandomGen r, Sampleable a d) => d -> a -> r -> a
-sample x prev_state gen
-    | unitSample sampleGen < alpha  = new_state  -- trace ("accepted, llik: " ++ show llik ++ "a: " ++ show alpha) new_state
+sample x !prev_state gen
+    | unitSample sampleGen < alpha  = new_state -- trace ("accepted, llik: " ++ show llik ++ "a: " ++ show alpha) new_state
     | otherwise                     = prev_state -- trace ("rejected, llik: " ++ show llik ++ "a: " ++ show alpha) prev_state
                                 where alpha = exp $ llikDiff x (prev_state, new_state)
                                       new_state = condMove x moveGen prev_state
@@ -43,7 +46,7 @@ sample x prev_state gen
                                       llik = llikelihood x new_state
 
 getMHChain :: (RandomGen r, Sampleable a d) => r -> d -> a -> [a]
-getMHChain gen x start = start:getMHChain aGen x (sample x start bGen)
+getMHChain gen x !start = start:getMHChain aGen x (sample x start bGen)
                      where (aGen, bGen) = split gen
 
 getElement :: (RandomGen r, Sampleable a d) => r -> d -> a -> Int -> a
@@ -53,3 +56,13 @@ getElement gen x start n = foldl' sample_parameters start (take n $ randoms gen)
 randoms:: (RandomGen r)=> r-> [r]
 randoms g = a:(randoms b)
             where (a,b) = split g
+
+--exactDistribution :: (Sampelable a d, SetPartition a) => d -> Int-> [(Double, a)]
+--exactDistribution x k | countSetPartitionsWithKParts k d > 1000000 = []
+--                      | otherwise = map (\p -> )
+--                        where d = dimension x
+--                              n = length x
+--                              partitions = setPartitionsWithKParts k n
+
+
+

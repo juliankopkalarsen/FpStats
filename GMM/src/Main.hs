@@ -69,12 +69,12 @@ time a = do
 -- Main
 main = do
     --contents <- readFile "../../Data/AccidentData.csv"
-    --contents <- readFile "../../Data/2Clusters.csv"
+    --contents <- readFile "../../Data/2Clusters.csv"d
     contents <- readFile "../../Data/synthetic.6clust.csv"
     --contents <- readFile "../../Data/synth2c2d.csv"
 
     let num_Components = 6
-        num_Samples = 4000
+        num_Samples = 40000
         stdData = p2NormList contents
         result = gmmElement stdData 1 num_Components
         p a = plot X11 $ plotClusters stdData a

@@ -12,6 +12,7 @@ module Main (
 import Test.Framework (defaultMain)
 
 import Math.Test
+import MCMC.Test
 
 main :: IO ()
-main = defaultMain [mathSuite]
+main = defaultMain [mathSuite, mcmcSuite]

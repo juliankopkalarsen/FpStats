@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 -----------------------------------------------------------------------------
 --
@@ -114,5 +115,7 @@ validX xs ys = length xs > 1
                && dimension xs > 1
                && dimension ys > 1
                && dimension xs == dimension ys
+
+
 
 

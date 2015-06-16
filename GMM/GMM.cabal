@@ -8,18 +8,21 @@ description: A Gaussian Mixture Model with metropolis hastings inference
 data-dir: ""
 
 library
-    build-depends: base -any, hmatrix -any, hmatrix-gsl-stats==0.2, hstatistics -any, array -any, parsec -any, random, easyplot
+    build-depends: base -any, hmatrix -any, hmatrix-gsl-stats ==0.2,
+                   hstatistics -any, array -any, parsec -any, random -any,
+                   easyplot -any, parallel -any, combinat -any, containers -any, HUnit -any,
+                   QuickCheck -any, test-framework-quickcheck2 -any,
+                   test-framework-hunit -any, test-framework -any, ieee754 -any
     exposed-modules: Distributions FileParsing LikSpecLang MCMC Math
-                     Partition
+                     Partition MCMC.Test
     exposed: True
     buildable: True
+    other-extensions: TemplateHaskell
     extensions: BangPatterns TemplateHaskell
-    other-extensions:  TemplateHaskell
     hs-source-dirs: src
     ghc-options:
         -O2
         -threaded
-        -ddump-to-file
         -ddump-splices
         -fprof-auto
         -auto-all
@@ -30,26 +33,19 @@ executable GMM
     main-is: Main.hs
     buildable: True
     extensions: MultiParamTypeClasses RankNTypes FlexibleInstances
-                BangPatterns TypeSynonymInstances GADTs GADTSyntax
-                TemplateHaskell
+                BangPatterns TypeSynonymInstances GADTs GADTSyntax TemplateHaskell
     hs-source-dirs: src
     other-modules: MCMC Math Partition GMM LikSpecLang Distributions
-    ghc-options:
-        -O2
-        -threaded
-        -ddump-to-file
-        -ddump-splices
-        -fprof-auto
-        -auto-all
-        "-with-rtsopts=-N -p -s -h -i0.1"
+    ghc-options: -O2 -threaded -ddump-splices -fprof-auto -auto-all
+        "-with-rtsopts=-N -p -s -hd -i0.1"
 
 test-suite test-GMM
-    build-depends: base -any, hmatrix -any, HUnit -any, QuickCheck -any, test-framework-quickcheck2 -any,
+    build-depends: base -any, hmatrix -any, HUnit -any,
+                   QuickCheck -any, test-framework-quickcheck2 -any,
                    test-framework-hunit -any, test-framework -any, ieee754 -any
     type: exitcode-stdio-1.0
     main-is: Test.hs
     buildable: True
-    extensions: BangPatterns
     hs-source-dirs: src
-    other-modules: MCMC Math Partition LikSpecLang Distributions
-                   FileParsing Math.Test
+    other-modules: MCMC MCMC.Test Math Partition LikSpecLang
+                   Distributions FileParsing Math.Test

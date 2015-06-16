@@ -26,11 +26,10 @@ import Numeric.LinearAlgebra (Matrix,
                               takeDiag,
                               outer)
 
+
+
 import Numeric.LinearAlgebra.Data (konst, size)
 
-import Partition (Partition, Component, groups, group)
-
-import LikSpecLang
 
 
 -- | Log Normal-Wishard likelihood for a single component
@@ -44,10 +43,10 @@ lnormalInvWishartSS (n, s, mu) = - fromIntegral n * d * 2 * log pi
                     where   d = fromIntegral $ fst $ size s :: Double
                             v0 = 100 -- hyperparameter must be (v0 > d)
                             vn = v0 + fromIntegral n
-                            alpha0 = ident $ fst $ size s -- hyperparameter for the shape of the covariance matrix
-                            alphaN = alpha0 + s + scale ((k0*fromIntegral n)/(k0+kn)) ((mu-mu0) `outer` (mu-mu0))
-                            ldalpha0 = lnDeterminant alpha0
-                            ldalphaN = lnDeterminant alphaN
+                            t0 = ident $ fst $ size s -- hyperparameter for the shape of the covariance matrix
+                            tN = t0 + s + scale ((k0*fromIntegral n)/(k0+kn)) ((mu-mu0) `outer` (mu-mu0))
+                            ldalpha0 = lnDeterminant t0
+                            ldalphaN = lnDeterminant tN
                             k0 = 0.2 -- hyperparameter
                             kn = k0 + fromIntegral n
                             mu0 = (konst 0.0 $ fst $ size s ):: Vector Double -- hyperparameter
@@ -56,6 +55,7 @@ lnormalInvWishartSS (n, s, mu) = - fromIntegral n * d * 2 * log pi
 
 -- | Log Normal-Wishard likelihood for a single component
 lnormalInvWishart :: X -> Double
+lnormalInvWishart [] = 0
 lnormalInvWishart x = - n * d * 2 * log pi
                       + mlgamma d (vn/2)
                       - mlgamma d (v0/2)

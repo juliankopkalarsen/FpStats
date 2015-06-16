@@ -23,14 +23,17 @@ module Math (
     scatterMatrixAlt,
     mean,
     meanv,
-    lnDeterminant
+    lnDeterminant,
+    frequency,
+    normalizeFrequency,
+    normalizeDist
 ) where
 
 import Numeric.LinearAlgebra (Matrix, Vector, trans, (<>), fromRows, dim, meanCov, invlndet, outer, konst, scale)
 import Numeric.LinearAlgebra.Data (size)
 import Debug.Trace
-import Data.List ((\\))
-import Partition (group)
+import Data.List ((\\), sort, group)
+import Control.Arrow ((&&&))
 
 qtr x = trace ("value: " ++ show x) x
 
@@ -49,7 +52,7 @@ scatterMatrixAlt x = sum $ map (\v -> outer (v-xm) (v-xm)) x
                 where xm = meanv x
 
 scatterMatrix :: X -> Matrix Double
-scatterMatrix x = sum (map (\ v -> outer v v) x) - scale n (outer xm xm)
+scatterMatrix x = sum (map (\v -> outer v v) x) - scale n (outer xm xm)
                     where xm = meanv x
                           n = fromIntegral $ length x
 
@@ -142,3 +145,13 @@ lgamma xx = let tmp' = (xx+5.5) - (xx+0.5)*log(xx+5.5)
 mlgamma :: Double -> Double -> Double
 mlgamma p a = (log pi)*(p*(p-1)/4) + sum (map (\j -> lgamma (a + ((1-j)/2))) [1..p])
 
+frequency :: Ord a => [a] -> [(a, Int)]
+frequency = map (\(x:xs) -> (x, length (x:xs))) . group . sort
+
+normalizeFrequency :: (Eq c) => [(c, Int)] -> [(c, Double)]
+normalizeFrequency f = map (\(e, i) -> (e, (fromIntegral i)/n)) f
+                    where   n = fromIntegral $ sum [i | (e, i)<- f]
+
+normalizeDist :: (Eq c, Fractional a) => [(c, a)] -> [(c, a)]
+normalizeDist f = map (\(e,i ) -> (e, i/n)) f
+      where   n = sum [i | (e, i)<- f]
