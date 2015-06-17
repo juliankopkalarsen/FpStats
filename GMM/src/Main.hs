@@ -46,7 +46,7 @@ plotClusters x p = map toplot $ range (0,((k p)-1))
 qtr x = trace ("value: " ++ show x) x
 
 instance Sampleable Partition X where
-    condMove _ r p = move r p
+    proposeMove _ r p = (move r p, 1)
     llikelihood = $(simplify [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
     llikDiff  = $((delta . simplify) [|\d part -> sum $ map (lnormalInvWishart . (group d)) (p part)|])
 
