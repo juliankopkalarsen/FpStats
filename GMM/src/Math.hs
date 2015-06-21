@@ -11,12 +11,14 @@ Definition of math functions like 'scatterMatrix' and the multivariate log Gamma
 module Math (
     X,
     dimension,
-    Sstat,
     add_means,
     sub_means,
     add_scatter,
     sub_scatter,
-    fromX,
+    Sstat,
+    fromData,
+    update,
+    updateList,
     AbelianGroup((<+>), (<->)),
     mlgamma,
     scatterMatrix,
@@ -37,14 +39,15 @@ import Control.Arrow ((&&&))
 
 qtr x = trace ("value: " ++ show x) x
 
--- | Class for the
-class AbelianGroup a where
-    (<+>) :: a -> a -> a
-    (<->) :: a -> a -> a
 
 -- | Type synonym for data objects that can be anything as long as it is compatible with the likelihood
 --   could be extended to a type class with sufficient statistics member functions.
 type X = [Vector Double]
+
+-- | Class for the
+class AbelianGroup a where
+    (<+>) :: a -> a -> a
+    (<->) :: a -> a -> a
 
 -- | Computes the scatter matrix defined as:
 scatterMatrixAlt :: X -> Matrix Double
@@ -66,20 +69,47 @@ meanv x = scale (1/(fromIntegral $ length x))(sum x)
 dimension :: [Vector Double] -> Int
 dimension = dim . head
 
-type Sstat = (Int, Matrix Double, Vector Double)
+type Sstat = (Int, Vector Double, Matrix Double)
 
-fromX :: X -> Sstat
-fromX x = (length x, scatterMatrix x, meanv x)
+fromData :: X -> Sstat
+fromData x = (length x, meanv x, scatterMatrix x)
+
+update :: (X, Sstat) -> X -> Sstat
+update (x,s) x' = (s <-> removed) <+> added
+                where removed =  (fromData (x\\x'))
+                      added   =  (fromData (x'\\x ))
+--update (p,s) p' = fromX p'
+
+updateList :: ([X],[Sstat]) -> [X] -> [Sstat]
+updateList (xs,ss) ys = map (\(x, s, y) -> update (x,s)  y) $ zip3 xs ss ys
 
 instance AbelianGroup Sstat where
     s <+> (0,_,_) = s
-    (n1, s1, m1) <+> (n2, s2, m2) = (n1+n2, add_scatter n1 s1 m1 n2 s2 m2 , add_means n1 m1 n2 m2)
+    (n1, m1, s1) <+> (n2, m2, s2) = (n1+n2, add_means n1 m1 n2 m2, add_scatter n1 s1 m1 n2 s2 m2 )
     s <-> (0,_,_) = s
-    (n1, s1, m1) <-> (n2, s2, m2) = (n1-n2, sub_scatter n1 s1 m1 n2 s2 m2, sub_means n1 m1 n2 m2)
+    (n1, m1, s1) <-> (n2, m2, s2) = (n1-n2, sub_means n1 m1 n2 m2, sub_scatter n1 s1 m1 n2 s2 m2)
 
 instance (AbelianGroup a) => AbelianGroup [a] where
     x <+> y = map (\(a,b) -> a <+> b) $ zip x y
     x <-> y = map (\(a,b) -> a <-> b) $ zip x y
+
+
+--ss' :: X -> Partition -> [Sstat] -> Partition -> [Sstat]
+--ss' x par s npar = map go $ zip3 (p par) s (p npar)
+--        where go (c1, s, c2)
+--               | c1 == c2 = s
+--               | otherwise = updateSstat x c1 s c2
+--
+--ssComponent :: X -> [Int] -> Sstat
+--ssComponent x []= (0, konst 0 (d,d), konst 0 d)
+--                where  d = dim $ head x
+--ssComponent x c = (length c, scatterMatrix xs, meanv xs)
+--                where  xs = group x c
+--
+--updateSstat :: X -> [Int] -> Sstat -> [Int] -> Sstat
+--updateSstat x c1 s c2 = (s <-> removed) <+> added
+--                where removed =  (ssComponent x (c1\\c2))
+--                      added =   (ssComponent x (c2\\c1))
 
 add_means :: Int -> Vector Double -> Int -> Vector Double -> Vector Double
 add_means _ m1 0 _ = m1

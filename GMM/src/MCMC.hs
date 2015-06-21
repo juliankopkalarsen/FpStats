@@ -12,9 +12,10 @@ Stability   : experimental
 
 module MCMC (
     Moveable(move),
-    Sampleable(proposeMove, llikelihood, llikDiff),
+    Sampleable(startValue, proposeMove, llikelihood, llikDiff),
     getMHChain,
-    getElement
+    getElement,
+    cChain
 ) where
 
 import System.Random (RandomGen, split, randomR)
@@ -28,12 +29,14 @@ class Moveable m where
     move :: (RandomGen r) =>  r -> m -> m
 
 class Sampleable a d where
+    startValue :: d -> a
     proposeMove ::(RandomGen r) => d -> r -> a -> (a, Double)
     llikelihood :: d -> a -> Double
     llikDiff :: d -> (a, a) -> Double
     llikDiff d (p, p') = (llikelihood d p') - (llikelihood d p) -- Default implementation
     evaluateRatio :: d -> (a, a) -> Double
     evaluateRatio x dp = exp $ llikDiff x dp -- Default implementation
+
 
 unitSample :: (RandomGen r)=> r -> Double
 unitSample g = fst $ randomR (0.0, 1.0) g
@@ -47,6 +50,11 @@ sample x !prev_state gen
                                       (moveGen, sampleGen) = split gen
                                       llik = llikelihood x new_state
 
+getChain :: (RandomGen r, Sampleable a d) => r -> d -> [a]
+getChain gen x = start:getMHChain aGen x (sample x start bGen)
+                     where (aGen, bGen) = split gen
+                           start = startValue x
+
 getMHChain :: (RandomGen r, Sampleable a d) => r -> d -> a -> [a]
 getMHChain gen x !start = start:getMHChain aGen x (sample x start bGen)
                      where (aGen, bGen) = split gen
@@ -59,5 +67,11 @@ randoms:: (RandomGen r)=> r-> [r]
 randoms g = a:(randoms b)
             where (a,b) = split g
 
-
-
+cChain ::(RandomGen r) => (r -> a -> (a, Double)) -> ((a,a) -> Double) -> r -> a -> [a]
+cChain genProp evalRatio r !start = start:(cChain genProp evalRatio rb next)
+                            where (ra, rb) = split r
+                                  (rProp, rAccept) = split ra
+                                  (proposal, moveRatio) = genProp rProp start
+                                  likRatio = evalRatio (start,proposal)
+                                  alpha = likRatio * moveRatio
+                                  next = if (unitSample rAccept) < alpha then proposal else start

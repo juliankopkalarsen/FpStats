@@ -100,12 +100,12 @@ scatter_subtraction x k = k>= 1 && k >= (quot (length x) 2)+1 && k <= length x =
                   types = (x::X, k::Int)
 
 
-sstat_addition x k = k <= length x ==> (fromX xs) <+> (fromX ys) ~== (fromX x)
+sstat_addition x k = k <= length x ==> (fromData xs) <+> (fromData ys) ~== (fromData x)
             where   xs = take k x
                     ys = drop k x
                     types = (x::X, k::Int)
 
-sstat_subtraction x k = k < length x ==> (fromX x) <-> (fromX xs) ~== (fromX ys)
+sstat_subtraction x k = k < length x ==> (fromData x) <-> (fromData xs) ~== (fromData ys)
             where   xs = take k x
                     ys = drop k x
                     types = (x::X, k::Int)

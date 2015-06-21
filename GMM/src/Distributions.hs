@@ -26,15 +26,12 @@ import Numeric.LinearAlgebra (Matrix,
                               takeDiag,
                               outer)
 
-
-
 import Numeric.LinearAlgebra.Data (konst, size)
-
 
 
 -- | Log Normal-Wishard likelihood for a single component
 lnormalInvWishartSS :: Sstat -> Double
-lnormalInvWishartSS (n, s, mu) = - fromIntegral n * d * 2 * log pi
+lnormalInvWishartSS (n, mu, s) = - fromIntegral n * d * 2 * log pi
                       + mlgamma d (vn/2)
                       - mlgamma d (v0/2)
                       + (v0/2) * ldalpha0
